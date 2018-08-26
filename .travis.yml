@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t astericky/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run astericky/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t astericky/multi-client ./client
+  - docker build -t astericky/multi-nginx ./nginx
+  - docker build -t astericky/multi-server ./server
+  - docker build -t astericky/multi-worker ./worker
+
+  # Log into the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push astericky/multi-client
+  - docker push astericky/multi-nginx
+  - docker push astericky/multi-server
+  - docker push astericky/multi-worker
